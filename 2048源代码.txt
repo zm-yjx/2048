@@ -1,0 +1,734 @@
+#include<stdio.h>
+#include<graphics.h>
+#include<stdlib.h>
+#include<time.h>
+#include<mmsystem.h>
+#include<Windows.h>
+#pragma comment(lib,"Winmm.lib")
+PIMAGE games[12];
+PIMAGE propphoto;
+PIMAGE propphoto2;
+int gamesindex[12] = { 0,2,4,8,16,32,64,128,256,512,1024,2048 };
+int map[5][5];
+#define SIZE 5
+clock_t start, stop;
+int duration;
+
+//背景
+void back()
+{
+	char filename[30];
+	for (int a = 0; a < 12; a++)
+	{
+		
+		sprintf_s(filename, "屏幕截图(%d).png", a + 60);
+		games[a] = newimage();
+		getimage(games[a], filename);
+
+	}
+
+	initgraph(500, 500, 0);
+	setbkcolor(WHITE);
+	setcaption("2048");
+
+	setcolor(BLUE);
+	setlinewidth(5);
+	line(0, 500, 500, 500);
+
+	PIMAGE backphoto;
+	backphoto = newimage();
+	getimage(backphoto, "主页.jpg");
+	putimage(0, 0, backphoto);
+
+	setcolor(BLACK);
+	setfont(50, 0, "楷体");
+	setbkmode(TRANSPARENT);
+	xyprintf(18, 0, "欢迎来到豪华版2048");
+
+	setcolor(BLUE);
+	setfont(30, 0, "楷体");
+	setbkmode(TRANSPARENT);
+	xyprintf(0, 100, "请选择模式");
+	setcolor(GREEN);
+	xyprintf(90, 150, "1.常规赛");
+	xyprintf(90, 200, "2.限时赛");
+	xyprintf(90, 250, "3.道具赛");
+	setcolor(BLUE);
+	xyprintf(90, 300, "4.了解游戏规则");
+	setcolor(RED);
+	xyprintf(130, 400, "空格键退出游戏");
+
+}
+
+//判断是否已经满格失败
+int lose(int map[5][5])
+{
+	int key = 0;
+	for (int a = 0; a < 5; a++)
+	{
+		for (int b = 0; b < 5; b++)
+		{
+			if (map[a][b] == 0)
+			{
+				key++;
+			}
+			else
+			{
+				continue;
+			}
+		}
+	}
+	return key;
+}
+
+//画出当前游戏内容
+void draw(int map[5][5])
+{
+	
+	initgraph(500, 500, 0);
+	setbkcolor(WHITE);
+	setcaption("2048");
+	
+	int x, y,k;
+	for (int a = 0; a < 5; a++)
+	{
+		for(int  b = 0; b < 5; b++)
+		{			
+			x = 100 * a;
+			y = 100 * b;
+			for (k = 0; k < 12; k++)
+			{				
+				if (gamesindex[k] == map[a][b])
+				{
+					break;
+				}
+			}
+			putimage(x, y, games[k]);
+		}
+	}
+
+	setcolor(BLUE);
+	setlinewidth(4);
+	line(0, 500, 500, 500);
+
+	setcolor(BLUE);
+	setlinewidth(4);
+	line(0, 400, 500, 400);
+
+	setcolor(BLUE);
+	setlinewidth(4);
+	line(0, 300, 500, 300);
+
+	setcolor(BLUE);
+	setlinewidth(4);
+	line(0, 200, 500, 200);
+
+	setcolor(BLUE);
+	setlinewidth(4);
+	line(0, 100, 500, 100);
+
+	setcolor(BLUE);
+	setlinewidth(4);
+	line(0, 0, 500, 0);
+
+	setcolor(BLUE);
+	setlinewidth(4);
+	line(0, 0, 500, 0);
+
+	setcolor(BLUE);
+	setlinewidth(4);
+	line(100, 0, 100, 500);
+
+	setcolor(BLUE);
+	setlinewidth(4);
+	line(200, 0, 200, 500);
+
+	setcolor(BLUE);
+	setlinewidth(4);
+	line(300, 0, 300, 500);
+
+	setcolor(BLUE);
+	setlinewidth(4);
+	line(400, 0, 400, 500);
+
+	setcolor(BLUE);
+	setlinewidth(4);
+	line(500, 0, 500, 500);
+
+	setcolor(BLUE);
+	setlinewidth(4);
+	line(0, 0, 0, 500);
+
+}
+
+//随机产生随机数
+void randnum(int map[5][5])
+{	
+	srand((unsigned int)time(NULL));
+	while (1)
+	{
+		int a = rand() % 5;
+		int b = rand() % 5;
+		if (map[a][b] != 0)
+		{
+			continue;
+		}
+		map[a][b] = (rand() % 2+1) * 2;
+		break;
+	}
+}
+
+//向下合并
+int movedown(int map[5][5])
+{
+	int flag = 0;//
+	for (int a = 0; a < 5; a++)
+	{
+		for (int b = 4; b > 0; b--)
+		{			
+			if (map[a][b] == 0)
+			{
+				continue;
+			}
+
+			for (int k = b - 1; k >= 0; k--)
+			{			
+				if (map[a][k] != 0)
+				{
+					if (map[a][k] == map[a][b])
+					{
+						map[a][b] = map[a][b] * 2;
+						map[a][k] = 0;
+						flag = 1;
+					}
+					break;
+				}
+			}
+		}
+		for (int b = 4; b >= 0; b--)
+		{
+			if (map[a][b] == 0)
+			{
+				continue;
+			}
+			for (int k = 4; k > b; k--)
+			{			
+				if (map[a][k] == 0)
+				{
+					map[a][k] = map[a][b];
+					map[a][b] = 0;
+					flag = 1;
+					break;
+				}
+			}
+		}
+	}
+	randnum(map);
+	if (flag)
+		return 0;
+	else
+		return 1;
+}
+
+//向上合并
+int moveup(int map[5][5])
+{
+	int flag = 0;
+	for (int a = 0; a < 5; a++)
+	{
+		for (int b = 0; b < 4; b++)
+		{			
+			if (map[a][b] == 0)
+			{
+				continue;
+			}
+			for (int k = b + 1; k < 5; k++)
+			{				
+				if (map[a][k] != 0)
+				{
+					if (map[a][k] == map[a][b])
+					{
+						map[a][b] = map[a][b] * 2;
+						map[a][k] = 0;
+						flag = 1;
+					}
+					break;
+				}
+			}
+		}
+		for (int b = 0; b < 5; b++)
+		{
+			if (map[a][b] == 0)
+			{
+				continue;
+			}
+			for (int k = 0; k < b; k++)
+			{				
+				if (map[a][k] == 0)
+				{
+					map[a][k] = map[a][b];
+					map[a][b] = 0;
+					flag = 1;
+					break;
+				}
+			}
+		}
+	}
+	randnum(map);
+	if (flag)
+		return 0;
+	else
+		return 1;
+}
+
+//向左合并
+int moveleft(int map[5][5])
+{
+	int flag = 1;
+	for (int a = 0; a < 5; a++)
+	{
+		for (int b = 0; b < 4; b++)
+		{			
+			if (map[b][a] == 0)
+			{
+				continue;
+			}
+
+			for (int k = b + 1; k < 5; k++)
+			{				
+				if (map[k][a] != 0)
+				{
+					if (map[k][a] == map[b][a])
+					{
+						map[b][a] = map[b][a] * 2;
+						map[k][a] = 0;
+						flag = 1;
+					}
+					break;
+				}
+			}
+		}
+		for (int b = 0; b < 5; b++)
+		{
+			if (map[b][a] == 0)
+			{
+				continue;
+			}
+			for (int k = 0; k < b; k++)
+			{			
+				if (map[k][a] == 0)
+				{
+					map[k][a] = map[b][a];
+					map[b][a] = 0;
+					flag = 1;
+					break;
+				}
+			}
+		}
+	}
+	randnum(map);
+	if (flag)
+	{
+		return 0;
+	}
+	else
+	{
+		return 0;
+	}
+}
+
+//向右合并
+int moveright(int map[5][5])
+{
+	int flag = 1;
+	for (int a = 0; a < 5; a++)
+	{
+		for (int b = 4; b > 0; b--)
+		{			
+			if (map[b][a] == 0)
+			{
+				continue;
+			}
+			for (int k = b - 1; k >= 0; k--)
+			{			
+				if (map[k][a] != 0)
+				{
+					if (map[k][a] == map[b][a])
+					{
+						map[b][a] = map[b][a] * 2;
+						map[k][a] = 0;
+						flag = 1;
+					}
+					break;
+				}
+			}
+		}
+		for (int b = 4; b >= 0; b--)
+		{
+			if (map[b][a] == 0)
+			{
+				continue;
+			}
+			for (int k = 4; k > b; k--)
+			{				
+				if (map[k][a] == 0)
+				{
+					map[k][a] = map[b][a];
+					map[b][a] = 0;
+					flag = 1;
+					break;
+				}
+			}
+		}
+	}
+	randnum(map);
+	if (flag)
+	{
+		return 0;
+	}
+	else
+	{
+		return 0;
+	}
+}
+
+//键盘交互
+void keydown(int p[5][5])
+{	
+	char key = getch();
+
+	switch (key)
+	{
+		case'w':
+		case'W':
+			moveup(p);
+			break;
+
+		case's':
+		case'S':
+			movedown(p);
+			break;
+
+		case'a':
+		case'A':
+			moveleft(p);
+			break;
+
+		case'd':
+		case'D':
+			moveright(p);
+			break;
+
+		case' ':
+			break;
+
+	}
+}
+
+//用于模式三的道具
+void prop(int map[5][5])
+{
+	srand((unsigned int)time(NULL));
+	
+	propphoto = newimage();
+	getimage(propphoto, "屏幕截图(72).png");
+
+	propphoto2 = newimage();
+	getimage(propphoto2, "屏幕截图(73).png");
+
+	while (1)
+	{
+		int a = rand() % 4;
+		int b = rand() % 4;
+		if (map[a][b] != 0)
+		{
+			continue;
+		}
+		else
+		{
+			if (a% 2 == 0 && b % 2 != 1)
+			{
+				for (int key = 0; key < 5; key++)
+				{
+					map[a][key] = 0;
+				}
+
+				putimage(a * 100, b * 100, propphoto);
+				Sleep(600);
+
+				delimage(propphoto);
+
+				draw(map);
+
+			}
+			else if (a % 2 != 0 && b % 2 == 1)
+			{
+				for (int key = 0; key < 5; key++)
+				{
+					map[key][b] = 0;
+				}				
+				putimage(a * 100, b * 100, propphoto2);
+				Sleep(600);
+
+				delimage(propphoto2);
+
+				draw(map);
+			}
+			else
+			{
+				map[a][b] = 0;
+			}
+		}
+		break;
+	}	
+}
+
+//模式一常规模式
+void run(int p[5][5])
+{
+	
+	mciSendString("open 2.mp3", 0, 0, 0);
+	mciSendString("play 2.mp3", 0, 0, 0);
+	int key = 1;
+
+	while (key)
+	{
+		keydown(p);
+		draw(p);
+
+		for (int a = 0; a < 5; a++)
+		{
+			for (int b = 0; b < 5; b++)
+			{
+				 if (p[a][b] == 2048)
+				{
+					 key = 0;
+				}
+				 else
+				 {
+					 continue;
+				 }
+			}
+		}
+		key = lose(p);
+	}
+
+	cleardevice();
+
+	setcolor(RED);
+	setfont(40, 0, "楷体");
+	xyprintf(0, 60, "你赢啦！");
+	xyprintf(0, 180, "按下任意键结束游戏");
+
+}
+
+//限时模式的困难选择面板
+void difficult()
+{
+
+	cleardevice();
+
+	initgraph(500, 500, 0);
+	setbkcolor(WHITE);
+	setcaption("限时模式难度选择");
+
+	setcolor(BLACK);
+	setfont(50, 0, "楷体");
+	setbkmode(TRANSPARENT);
+	xyprintf(18, 0, "请选择限时难度");
+
+	setcolor(BLUE);
+	setfont(30, 0, "楷体");
+	setbkmode(TRANSPARENT);
+	xyprintf(0, 100, "请选择难度");
+	setcolor(GREEN);
+	xyprintf(90, 150, "1.嗨害");
+	xyprintf(90, 200, "2.嗨害害");
+	xyprintf(90, 250, "3.嗨害害害");
+
+}
+
+//限时模式
+void run2(int map[5][5])
+{	
+	
+	mciSendString("open 3.mp3", 0, 0, 0);
+	mciSendString("play 3.mp3", 0, 0, 0);
+
+	int key = 0;
+
+node:
+
+	difficult();
+	char choose=getch();
+	
+	switch (choose)
+	{
+	case'1':
+		key = 90;
+		break;
+	case'2':
+		key = 60;
+		break;
+	case'3':
+		key = 30;
+		break;
+	default:
+		goto node;
+	}
+	
+	duration = 0; 
+	start = clock();
+	while (duration < key)
+	{
+		keydown(map);	
+		
+		stop = clock();
+		
+		draw(map);
+		duration = (int)(stop - start) / CLK_TCK;
+	}
+
+	int max=map[0][0];
+
+	for (int a = 0; a < 5; a++)
+	{
+		for (int b = 0;b < 5; b++)
+		{		
+			if (map[a][b] > max)
+			{
+				max = map[a][b];
+			}
+		}
+	}
+
+	cleardevice();
+
+	initgraph(500, 500, 0);
+	setbkcolor(WHITE);
+
+	setcolor(RED);
+	setfont(40, 0, "楷体");
+	xyprintf(0, 0, "游戏结束！");
+	xyprintf(100, 80, "你的最高分数为:%d", max);
+	xyprintf(150, 300, "用时:%d秒", key);
+
+}
+
+//道具模式
+void run3(int map[5][5])
+{
+	
+	mciSendString("open 4.mp3", 0, 0, 0);
+	mciSendString("play 4.mp3", 0, 0, 0);
+	
+	int key = 1;
+
+	while (key)
+	{
+		for (int a = 0; a < 5; a++)
+		{
+			for (int b = 0; b < 5; b++)
+			{				
+				if (map[a][b] ==16)
+				{
+					prop(map);
+					break;
+				}
+				else if (map[a][b] == 32)
+				{
+					key = 0;
+				}
+				else
+				{
+					continue;
+				}
+			}
+		}
+
+		keydown(map);
+
+		draw(map);
+
+		key = lose(map);
+	}
+
+	cleardevice();
+
+	setcolor(RED);
+	setfont(40, 0, "楷体");
+	xyprintf(0, 60, "你赢啦！");
+	xyprintf(0, 180, "按下任意键结束游戏");
+
+}
+
+//游戏说明
+void run4()
+{
+	
+	cleardevice();
+
+	initgraph(600, 400, 0);
+	setbkcolor(WHITE);
+	setcaption("2048游戏说明");
+;
+	setfont(20, 0, "楷体");
+	setbkmode(TRANSPARENT);
+	xyprintf(0, 10, "模式1为常规玩法，玩家最大数值达到2048时胜利或者当无法移动方");
+	xyprintf(0, 50, "块时结束游戏");
+	xyprintf(0, 90, "模式2限时赛，玩家限定时间为90s，并且会记录最大数值");
+	xyprintf(0, 130, "模式3道具赛，该模式会出现两种道具，出现位置随机，分别可以消");
+	xyprintf(0, 170, "除对应的行或者列所有的方格，当最大值为256时取得胜利");
+	
+	setfont(40, 0, "楷体");
+	xyprintf(95, 250, "按任意键返回主页面");
+
+	getch();
+
+}
+
+//主函数
+int main()
+{
+node:	
+	int p[5][5] = { 0 };
+	back();
+	
+	mciSendString("open 1.mp3", 0, 0, 0);
+	mciSendString("play 1.mp3", 0, 0, 0);
+
+	char key = getch();
+	switch (key)
+	{
+	case' ':
+		break;
+	case'1':
+		mciSendString("stop 1.mp3", 0, 0, 0);
+		run(p);
+		getch();
+		mciSendString("stop 2.mp3", 0, 0, 0);			
+		goto node;
+	case'2':
+		mciSendString("stop 1.mp3", 0, 0, 0);
+		run2(p);
+		getch();
+		mciSendString("stop 3.mp3", 0, 0, 0);		
+		goto node;
+	case'3':
+		mciSendString("stop 1.mp3", 0, 0, 0);
+		run3(p);
+		getch();
+		mciSendString("stop 4.mp3", 0, 0, 0);	
+		goto node;
+	case'4':
+		closegraph();
+		run4();
+		goto node;
+	default:
+		break;
+	}
+
+	getch();
+	closegraph();
+
+}
